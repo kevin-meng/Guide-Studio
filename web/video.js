@@ -59,7 +59,9 @@ export function renderVideoFrame(canvas, prepared, timeMs){
   ctx.save();ctx.shadowColor='rgba(33,48,70,.11)';ctx.shadowBlur=20;ctx.shadowOffsetY=6;
   ctx.fillStyle='#fff';ctx.fillRect(x-3,y-3,iw+6,ih+6);ctx.restore();
   ctx.save();ctx.translate(x,y);
-  ctx.drawImage(prepared.sanitizedImages?.[idx] || img,0,0,iw,ih);
+  const safeFrame=prepared.sanitizedImages?.[idx];
+  if(!safeFrame)throw new Error('视频预览缺少已脱敏底图，请重新准备视频');
+  ctx.drawImage(safeFrame,0,0,iw,ih);
   // Critical: apply all privacy masks before capturing/presenting each complete frame.
   const anns=entry.step.annotations||[];
   // The source is already irreversibly flattened into the private sanitizedImages buffer.

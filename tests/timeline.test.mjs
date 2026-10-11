@@ -26,17 +26,19 @@ test('events are ordered, immutable snapshots and include undo',()=>{
  const e2=makeEditEvent(step,'g','session',{action:'undo',objectId:'a',before:{x:.3},after:null});
  assert.equal(e1.seq,1);assert.equal(e2.seq,2);assert.equal(e1.after.x,.3);assert.equal(e2.action,'undo');
 });
-test('every rendered frame paints privacy mask before visible annotations',()=>{
+test('video renderer never draws raw screenshots and refuses missing sanitized frame',()=>{
  const calls=[];
- const ctx=new Proxy({}, {get(_,key){if(key==='measureText')return str=>({width:String(str).length*8});if(key==='canvas')return null;return (...args)=>{if(['drawImage','fillRect','stroke','fillText'].includes(key))calls.push({name:key,args});};},set(){return true;}});
+ const ctx=new Proxy({}, {get(_,key){if(key==='measureText')return str=>({width:String(str).length*8});return (...args)=>{if(key==='drawImage')calls.push(args[0]);};},set(){return true;}});
  const canvas={width:540,height:960,getContext:()=>ctx};
- const step={id:'s',description:'privacy safe',imageData:'data:image/png;base64,abc',annotations:[
+ const raw={naturalWidth:100,naturalHeight:200};
+ const safe={width:100,height:200,kind:'flattened-private-frame'};
+ const step={id:'s',description:'privacy safe',imageData:'private-original',annotations:[
   {id:'mask',type:'mask',x:.1,y:.1,w:.2,h:.2},{id:'shape',type:'rect',x:.3,y:.3,w:.2,h:.2}]};
  const entry={step,atMs:0,durationMs:3000,presentation:{cues:[{objectId:'shape',atMs:0,durationMs:200}],subtitle:'safe'}};
- renderVideoFrame(canvas,{guide:{title:'guide'},entries:[entry],images:[{naturalWidth:100,naturalHeight:200}],totalMs:3000},1600);
- const bitmap=calls.findIndex(e=>e.name==='drawImage');
- const masked=calls.findIndex((e,i)=>i>bitmap&&e.name==='fillRect');
- assert.ok(bitmap>=0&&masked>bitmap,'mask must be drawn on the screenshot before any frame is captured');
+ const prepared={guide:{title:'guide'},entries:[entry],images:[raw],sanitizedImages:[safe],totalMs:3000};
+ renderVideoFrame(canvas,prepared,1600);
+ assert.deepEqual(calls,[safe],'only sanitized bitmap may reach the recording surface');
+ assert.throws(()=>renderVideoFrame(canvas,{...prepared,sanitizedImages:[]},0),/已脱敏底图/);
 });
 test('multi-step durations sum and ordering follows steps, not object creation timestamps',()=>{
  const g={steps:[{id:'1',imageData:'a',annotations:[]},{id:'2',imageData:'b',annotations:[{id:'a',type:'circle',createdSeq:1}]}]};
