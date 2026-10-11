@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: guide
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: guide_studio
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guide -d guide_studio"]
+      interval: 5s
+      retries: 8
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://guide:${POSTGRES_PASSWORD}@db:5432/guide_studio
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?Set BOOTSTRAP_ADMIN_EMAIL in .env}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD in .env}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      LOCAL_UPLOAD_DIR: /app/data/uploads
+      COS_BUCKET: ${COS_BUCKET:-}
+      COS_REGION: ${COS_REGION:-ap-shanghai}
+      COS_ENDPOINT: ${COS_ENDPOINT:-}
+      COS_ACCESS_KEY_ID: ${COS_ACCESS_KEY_ID:-}
+      COS_SECRET_ACCESS_KEY: ${COS_SECRET_ACCESS_KEY:-}
+      COS_SESSION_TOKEN: ${COS_SESSION_TOKEN:-}
+    volumes: [uploads:/app/data/uploads]
+    depends_on:
+      db: {condition: service_healthy}
+volumes:
+  pgdata:
+  uploads:
