@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "exampleOnly": true,
+  "description": "讨论用契约样例。guideDraft、privateEventLog、publicPublication 是三个逻辑分离的数据存储，不能整体发送到公开API。",
+  "guideDraft": {
+    "id": "guide-example",
+    "title": "如何导出会议议程",
+    "revision": 3,
+    "steps": [
+      {
+        "id": "step-example",
+        "description": "进入会议详情，点击右下角的导出议程。",
+        "sourceAssetId": "asset-source-private-example",
+        "publicAssetId": "asset-flattened-public-example",
+        "annotations": [
+          {
+            "id": "annotation-mask-001",
+            "type": "mask",
+            "createdSeq": 1,
+            "createdAt": "2026-10-11T12:00:01.000Z",
+            "zIndex": 0,
+            "x": 0.12,
+            "y": 0.06,
+            "w": 0.32,
+            "h": 0.06
+          },
+          {
+            "id": "annotation-circle-002",
+            "type": "circle",
+            "createdSeq": 2,
+            "createdAt": "2026-10-11T12:00:02.000Z",
+            "zIndex": 1,
+            "x": 0.55,
+            "y": 0.72,
+            "w": 0.26,
+            "h": 0.11,
+            "color": "#E5484D",
+            "width": 0.006
+          },
+          {
+            "id": "annotation-arrow-003",
+            "type": "arrow",
+            "createdSeq": 4,
+            "createdAt": "2026-10-11T12:00:04.000Z",
+            "zIndex": 2,
+            "x": 0.42,
+            "y": 0.55,
+            "x2": 0.68,
+            "y2": 0.77,
+            "color": "#E5484D",
+            "width": 0.006
+          }
+        ],
+        "presentation": {
+          "schemaVersion": 1,
+          "timelineSource": "recorded",
+          "durationMs": 5000,
+          "subtitle": "进入会议详情，点击右下角的导出议程。",
+          "transition": {
+            "in": "fade",
+            "out": "cut"
+          },
+          "cues": [
+            {
+              "id": "cue-circle",
+              "type": "annotation.enter",
+              "objectId": "annotation-circle-002",
+              "atMs": 750,
+              "durationMs": 620,
+              "effect": "draw"
+            },
+            {
+              "id": "cue-arrow",
+              "type": "annotation.enter",
+              "objectId": "annotation-arrow-003",
+              "atMs": 1750,
+              "durationMs": 520,
+              "effect": "draw"
+            }
+          ]
+        }
+      }
+    ],
+    "videoSettings": {
+      "aspectRatio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "frameRate": 30,
+      "fit": "contain",
+      "captionMode": "bottom"
+    }
+  },
+  "privateEventLog": {
+    "guideId": "guide-example",
+    "stepId": "step-example",
+    "sessionId": "session-example",
+    "sourceRevision": 3,
+    "events": [
+      {
+        "eventId": "event-001",
+        "seq": 1,
+        "at": "2026-10-11T12:00:01.000Z",
+        "action": "annotation.add",
+        "objectId": "annotation-mask-001",
+        "after": {
+          "type": "mask",
+          "x": 0.12,
+          "y": 0.06,
+          "w": 0.32,
+          "h": 0.06
+        }
+      },
+      {
+        "eventId": "event-002",
+        "seq": 2,
+        "at": "2026-10-11T12:00:02.000Z",
+        "action": "annotation.add",
+        "objectId": "annotation-circle-002",
+        "after": {
+          "type": "circle",
+          "x": 0.45,
+          "y": 0.72,
+          "w": 0.26,
+          "h": 0.11
+        }
+      },
+      {
+        "eventId": "event-003",
+        "seq": 3,
+        "at": "2026-10-11T12:00:03.000Z",
+        "action": "annotation.update",
+        "objectId": "annotation-circle-002",
+        "before": {
+          "x": 0.45,
+          "y": 0.72,
+          "w": 0.26,
+          "h": 0.11
+        },
+        "after": {
+          "x": 0.55,
+          "y": 0.72,
+          "w": 0.26,
+          "h": 0.11
+        },
+        "gestureDurationMs": 380
+      },
+      {
+        "eventId": "event-004",
+        "seq": 4,
+        "at": "2026-10-11T12:00:04.000Z",
+        "action": "annotation.add",
+        "objectId": "annotation-arrow-003",
+        "after": {
+          "type": "arrow",
+          "x": 0.42,
+          "y": 0.55,
+          "x2": 0.68,
+          "y2": 0.77
+        }
+      },
+      {
+        "eventId": "event-005",
+        "seq": 5,
+        "at": "2026-10-11T12:00:05.000Z",
+        "action": "annotation.add",
+        "objectId": "annotation-text-undone",
+        "after": {
+          "type": "text",
+          "x": 0.2,
+          "y": 0.4,
+          "text": "草稿文字"
+        }
+      },
+      {
+        "eventId": "event-006",
+        "seq": 6,
+        "at": "2026-10-11T12:00:06.000Z",
+        "action": "undo",
+        "targetEventId": "event-005",
+        "objectId": "annotation-text-undone",
+        "before": {
+          "type": "text",
+          "x": 0.2,
+          "y": 0.4,
+          "text": "草稿文字"
+        },
+        "after": null
+      }
+    ]
+  },
+  "publicPublication": {
+    "title": "如何导出会议议程",
+    "steps": [
+      {
+        "id": "step-example",
+        "description": "进入会议详情，点击右下角的导出议程。",
+        "publicAssetId": "asset-flattened-public-example"
+      }
+    ]
+  }
+}
