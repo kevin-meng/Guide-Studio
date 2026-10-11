@@ -77,3 +77,22 @@ def test_bad_upload_and_membership():
         assert client.get('/api/projects').status_code == 200
         assert client.post('/api/projects',json={"workspaceId":w,"name":"Unauthorized"}).status_code == 403
         assert client.post('/api/guides',json={"projectId":project['id'],"title":"编辑者教程"}).status_code == 201
+
+
+def test_timeline_metadata_round_trip_without_public_leak():
+    with TestClient(app) as client:
+        client.post('/api/auth/login',json={'email':'owner@example.com','password':'StrongTestPass123!'})
+        project_id=client.get('/api/projects').json()[0]['id']
+        annotated={'id':'s-timeline','description':'点击按钮',
+            'annotations':[{'id':'circle-1','type':'circle','x':0.2,'y':0.2,'w':0.2,'h':0.1,'createdSeq':1,'createdAt':'2026-10-11T12:00:00Z'}],
+            'timelineSource':'recorded','nextAnnotationSeq':1,'nextEventSeq':2,
+            'presentation':{'schemaVersion':1,'durationMs':2700,'timelineSource':'manual','cues':[{'objectId':'circle-1','atMs':700,'durationMs':500,'effect':'draw'}]}}
+        r=client.post('/api/guides',json={'projectId':project_id,'title':'时间线测试','steps':[annotated]})
+        assert r.status_code==201,r.text
+        gid=r.json()['id'];slug=r.json()['slug']
+        saved=client.get(f'/api/guides/{gid}').json()['steps'][0]
+        assert saved['annotations'][0]['id']=='circle-1'
+        assert saved['presentation']['cues'][0]['objectId']=='circle-1'
+        assert saved['nextAnnotationSeq']==1
+        # Public endpoint must never reveal private editable annotation or video timeline metadata.
+        assert client.get(f'/api/public/{slug}').status_code==404

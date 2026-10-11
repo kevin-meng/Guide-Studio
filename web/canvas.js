@@ -2,6 +2,7 @@
  * All annotations use normalized coordinates, so exporting at original resolution is lossless
  * relative to the uploaded bitmap (PNG bytes are not re-encoded until flattened export).
  */
+import {normalizeStep, nextAnnotation} from './timeline.js';
 const imageCache = new Map();
 const clamp = (v) => Math.min(1, Math.max(0, v));
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -24,7 +25,7 @@ function rectInfo(o) {
   return { x, y, w: Math.abs(o.w || 0), h: Math.abs(o.h || 0) };
 }
 
-function drawAnnotation(ctx, o, W, H) {
+export function drawAnnotation(ctx, o, W, H) {
   const unit = Math.min(W, H), line = Math.max(2, (o.width || 0.006) * unit);
   ctx.save();
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -107,11 +108,12 @@ export async function exportStep(step) {
 }
 
 export class AnnotationCanvas {
-  constructor(canvas, notify, requestText) {
+  constructor(canvas, notify, requestText, onOperation = () => {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.notify = notify;
     this.requestText = requestText;
+    this.onOperation = onOperation;
     this.step = null;
     this.image = null;
     this.tool = 'select';
@@ -128,6 +130,7 @@ export class AnnotationCanvas {
     this.canvas.addEventListener('dblclick', e => this.editExistingText(e));
   }
   async setStep(step) {
+    normalizeStep(step);
     this.step = step; this.selected = -1; this.history = []; this.future = [];
     this.image = null;
     this.draw();
@@ -150,9 +153,9 @@ export class AnnotationCanvas {
     return { x: clamp((e.clientX - b.left) / b.width), y: clamp((e.clientY - b.top) / b.height) };
   }
   snapshot() { if (this.step) { this.history.push(clone(this.step.annotations || [])); if (this.history.length > 35) this.history.shift(); this.future = []; } }
-  undo() { if (!this.step || !this.history.length) return; this.future.push(clone(this.step.annotations)); this.step.annotations = this.history.pop(); this.selected = -1; this.draw(); this.notify(); }
-  redo() { if (!this.step || !this.future.length) return; this.history.push(clone(this.step.annotations)); this.step.annotations = this.future.pop(); this.selected = -1; this.draw(); this.notify(); }
-  deleteSelected() { if (!this.step || this.selected < 0) return; this.snapshot(); this.step.annotations.splice(this.selected, 1); this.selected = -1; this.draw(); this.notify(); }
+  undo() { if (!this.step || !this.history.length) return; const before=clone(this.step.annotations); this.future.push(before); this.step.annotations = this.history.pop(); this.selected = -1; this.draw(); this.notify(); this.onOperation({action:'undo',before,after:clone(this.step.annotations)}); }
+  redo() { if (!this.step || !this.future.length) return; const before=clone(this.step.annotations); this.history.push(before); this.step.annotations = this.future.pop(); this.selected = -1; this.draw(); this.notify(); this.onOperation({action:'redo',before,after:clone(this.step.annotations)}); }
+  deleteSelected() { if (!this.step || this.selected < 0) return; const before=clone(this.step.annotations[this.selected]); this.snapshot(); this.step.annotations.splice(this.selected, 1); this.selected = -1; this.draw(); this.notify(); this.onOperation({action:'annotation.delete',objectId:before.id,before}); }
   draw() { if (!this.canvas.width) { this.canvas.width = 480; this.canvas.height = 320; } drawScene(this.ctx, this.image, this.step?.annotations || [], this.canvas.width, this.canvas.height, this.selected, true); }
   async down(e) {
     if (!this.step || !this.image) return;
@@ -160,7 +163,7 @@ export class AnnotationCanvas {
     const p = this.point(e), list = this.step.annotations;
     if (this.tool === 'text' || this.tool === 'number') {
       const content = await this.requestText(this.tool === 'number' ? '输入步骤序号' : '输入标注文字', this.tool === 'number' ? String(list.filter(o => o.type === 'number').length + 1) : '');
-      if (content?.trim()) { this.snapshot(); list.push({type: this.tool, x: p.x, y: p.y, text: content.trim(), color: this.color, fontSize: .037}); this.selected = list.length - 1; this.draw(); this.notify(); }
+      if (content?.trim() && this.step?.annotations===list) { this.snapshot(); const item=nextAnnotation(this.step,{type:this.tool,x:p.x,y:p.y,text:content.trim(),color:this.color,fontSize:.037}); list.push(item); this.selected=list.length-1; this.draw(); this.notify(); this.onOperation({action:'annotation.add',objectId:item.id,after:clone(item)}); }
       return;
     }
     if (this.tool === 'select') {
@@ -168,19 +171,19 @@ export class AnnotationCanvas {
       if (this.selected !== -1) {
         this.snapshot(); const selected = list[this.selected], r = bounds(selected);
         const resize = ['rect', 'circle', 'mask'].includes(selected.type) && Math.abs(p.x - (r.x + r.w)) < .035 && Math.abs(p.y - (r.y + r.h)) < .035;
-        this.drag = {mode: resize ? 'resize' : 'move', start: p, original: clone(selected), index: this.selected, changed: false};
+        this.drag = {mode: resize ? 'resize' : 'move', start: p, original: clone(selected), index: this.selected, changed: false, startedAt:performance.now()};
       } else this.drag = null;
       this.draw();
       if (this.drag) this.canvas.setPointerCapture(e.pointerId);
       return;
     }
     this.snapshot();
-    const item = { type: this.tool, color: this.color, width: this.width, x: p.x, y: p.y };
+    const item = nextAnnotation(this.step,{type:this.tool,color:this.color,width:this.width,x:p.x,y:p.y});
     if (['rect', 'circle', 'mask'].includes(this.tool)) Object.assign(item, {w: 0, h: 0});
     else if (this.tool === 'arrow') Object.assign(item, {x2: p.x, y2: p.y});
-    else if (this.tool === 'pen') item.points = [[p.x, p.y]];
+    else if (this.tool === 'pen') { item.points=[[p.x,p.y]]; item.strokeSamples=[[p.x,p.y,0]]; }
     list.push(item); this.selected = list.length - 1;
-    this.drag = {mode: 'draw', index: this.selected, start: p, changed: false};
+    this.drag = {mode:'draw',index:this.selected,start:p,changed:false,startedAt:performance.now()};
     this.canvas.setPointerCapture(e.pointerId);
     this.draw();
   }
@@ -193,7 +196,7 @@ export class AnnotationCanvas {
     if (d.mode === 'draw') {
       if (['rect', 'circle', 'mask'].includes(o.type)) { o.w = p.x - d.start.x; o.h = p.y - d.start.y; }
       if (o.type === 'arrow') { o.x2 = p.x; o.y2 = p.y; }
-      if (o.type === 'pen') o.points.push([p.x, p.y]);
+      if (o.type === 'pen' && o.points.length < 4000) { const last=o.points[o.points.length-1]; if(Math.hypot(last[0]-p.x,last[1]-p.y)>.002){o.points.push([p.x,p.y]);o.strokeSamples.push([p.x,p.y,Math.round(performance.now()-d.startedAt)]);} }
     } else if (d.mode === 'resize') {
       o.x = d.original.x; o.y = d.original.y;
       o.w = d.original.w + dx; o.h = d.original.h + dy;
@@ -212,7 +215,7 @@ export class AnnotationCanvas {
     if (!d.changed) {
       if (d.mode === 'draw') this.step.annotations.splice(d.index, 1);
       this.history.pop();
-    } else this.notify();
+    } else { this.notify(); const after=clone(this.step.annotations[d.index]); if(after){this.onOperation({action:d.mode==='draw'?'annotation.add':'annotation.update',objectId:after.id,before:d.mode==='draw'?null:d.original,after,gestureDurationMs:performance.now()-d.startedAt});} }
     this.draw();
   }
   async editExistingText(e) {
@@ -220,7 +223,7 @@ export class AnnotationCanvas {
     const obj = this.step?.annotations?.[index];
     if (obj && ['number', 'text'].includes(obj.type)) {
       const content = await this.requestText('修改标注', obj.text);
-      if (content !== null && content.trim()) { this.snapshot(); obj.text = content.trim(); this.selected = index; this.draw(); this.notify(); }
+      if (content !== null && content.trim() && this.step?.annotations?.includes(obj)) { const before=clone(obj); this.snapshot(); obj.text = content.trim(); this.selected = index; this.draw(); this.notify(); this.onOperation({action:'annotation.update',objectId:obj.id,before,after:clone(obj)}); }
     }
   }
 }
