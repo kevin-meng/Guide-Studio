@@ -31,3 +31,69 @@
 .video-cue-order{color:#6c7a8b;font-size:11px}.video-cue-actions{margin-left:auto;display:flex;gap:5px}
 .video-cue-actions button{min-width:33px;min-height:33px;cursor:pointer}.video-cue-actions button:disabled{opacity:.3;cursor:default}
 @media(max-width:700px){.video-modal{width:96vw;padding:15px;max-height:94vh}.video-modal-body{grid-template-columns:1fr;gap:19px}.video-screen canvas{max-height:42vh}.video-modal-header h2{font-size:17px}.video-controls{padding-bottom:12px}.video-buttons .btn{min-height:40px}}
+
+/* Mobile image-first tutorial authoring: every step is a separate card/canvas. */
+.mobile-gallery,.mobile-edit-toolbar{display:none}
+@media(max-width:760px){
+  .editor-page{padding:12px 12px 245px;background:#f8f9fb}
+  .editor-head{position:sticky;top:0;z-index:13;background:#fff}
+  .editor-mobile-steps{display:flex;position:sticky;top:57px;z-index:12;background:#f8f9fb;padding:12px 0 12px;gap:9px;overflow-x:auto}
+  .sort-step{display:inline-flex;align-items:center;gap:7px;min-height:43px;touch-action:pan-x;-webkit-user-select:none;user-select:none}
+  .sort-step.sorting{background:#e5ebf9;border-color:#6580bc;transform:scale(1.03)}
+  .sort-step.sort-target{box-shadow:inset 0 0 0 2px #5579c5}
+  .sort-handle{color:#b5bfcd;display:inline-flex;align-items:center}
+  .sort-handle .icon{height:12px;width:12px}
+  .mobile-gallery{display:flex;flex-direction:column;gap:14px}
+  .mobile-gallery-intro{font-size:11px;color:#8591a3;padding:0 2px 2px}
+  .mobile-guide-card{scroll-margin-top:122px;background:white;border:1px solid #e6eaf0;border-radius:15px;overflow:hidden;box-shadow:0 3px 14px rgba(26,38,59,.035)}
+  .mobile-guide-card.editing{border-color:#b6c5e5;box-shadow:0 5px 18px rgba(76,104,163,.085)}
+  .mobile-card-header{padding:14px 13px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .mobile-card-header strong{font-size:13px;color:#293549}
+  .mobile-card-header span{margin-left:8px;font-size:11px;color:#a3adba}
+  .mobile-card-controls{display:flex;gap:5px}
+  .mobile-card-controls button{border:1px solid #e6eaf1;border-radius:7px;min-width:34px;min-height:32px;background:#fff;color:#75839c;cursor:pointer}
+  .mobile-canvas-preview{display:block;width:100%;border:0;padding:14px 14px 10px;margin:0;background:#f6f7fa;cursor:pointer;touch-action:pan-y}
+  .mobile-canvas-preview canvas{display:block;width:auto;max-width:100%;max-height:440px;height:auto;margin:0 auto;box-shadow:0 5px 20px rgba(28,42,65,.12);pointer-events:none}
+  .mobile-canvas-preview span{margin-top:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #dde4f2;background:#fff;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:650;color:#5774ad}
+  .mobile-canvas-preview .icon{height:13px;width:13px}
+  .mobile-live-canvas .canvas-zone{max-height:58vh;min-height:240px;padding:12px;overflow:hidden;align-items:flex-start;justify-content:center}
+  .mobile-live-canvas .canvas-wrap{transform-origin:0 0;will-change:transform;line-height:0;touch-action:none}
+  .mobile-live-canvas canvas{touch-action:none;display:block;max-width:100%;height:auto;user-select:none;-webkit-user-select:none}
+  .zoom-hint{font-size:10px;color:#8390a3;text-align:center;padding:10px 6px;background:#f8f9fc}
+  .mobile-card-desc{display:flex;flex-direction:column;gap:7px;padding:13px;font-size:12px;font-weight:660;color:#48566b}
+  .mobile-card-desc textarea{font-family:inherit;resize:vertical;width:100%;min-height:66px;padding:11px 12px;border:1px solid #ebedf2;border-radius:9px;background:#f9fafb;color:#263349;font-weight:400;font-size:13px;line-height:1.6}
+  .mobile-card-desc textarea:focus{outline:2px solid #d4def6;background:#fff}
+  .mobile-empty-card,.mobile-add-card{border:1px dashed #cbd6e6;border-radius:12px;padding:20px;width:100%;background:#fff;color:#5876ae;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700}
+  .mobile-empty-card{border-radius:0;border-left:0;border-right:0}
+  .mobile-add-card .icon,.mobile-empty-card .icon{width:15px;height:15px}
+  .editor-center > .editor-section-label,.editor-center > .board,.editor-center > .description-card{display:none}
+  .mobile-edit-toolbar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:20;flex-direction:column;background:#fff;border-top:1px solid #e2e7ef;box-shadow:0 -10px 35px rgba(24,39,62,.1);padding:7px 0 calc(8px + env(safe-area-inset-bottom));border-radius:17px 17px 0 0}
+  .mobile-tool-head{display:flex;align-items:center;justify-content:space-between;padding:5px 17px 9px;font-size:12px;font-weight:760}
+  .mobile-tool-head small{font-size:10px;color:#8b98a8;margin-left:9px;font-weight:400}
+  .mobile-tool-close{background:#eef2fa;border:0;color:#4967a8;font-weight:730;font-size:12px;border-radius:8px;padding:7px 13px}
+  .mobile-tools-scroll{display:flex;gap:3px;padding:0 11px 7px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+  .mobile-tools-scroll::-webkit-scrollbar{display:none}
+  .mobile-annotation-tool{flex:0 0 58px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:7px 3px;border:1px solid transparent;border-radius:10px;background:transparent;color:#67758b;min-height:56px;font-size:10px;cursor:pointer}
+  .mobile-annotation-tool .icon{width:21px;height:21px}
+  .mobile-annotation-tool.active{color:#436bb5;background:#edf2fd;border-color:#dae4f6;font-weight:750}
+  .mobile-tool-options{display:flex;align-items:center;gap:9px;border-top:1px solid #f0f2f6;padding:10px 14px 5px}
+  .brush-label{font-size:10px;color:#8592a3;white-space:nowrap}
+  .brush-label output{color:#506da8;font-variant-numeric:tabular-nums}
+  #brush-width{width:68px;min-width:55px;accent-color:#5b78b5}
+  .mobile-tool-options .color-group{display:flex;gap:9px;margin-left:2px}
+  .mobile-tool-options .color-dot{height:21px;width:21px;flex-shrink:0}
+  .mobile-edit-actions{margin-left:auto;display:flex;gap:2px;align-items:center}
+  .mobile-edit-actions button{border:0;background:#fff;color:#738398;display:inline-flex;align-items:center;gap:2px;justify-content:center;padding:6px 5px;font-size:10px;min-height:34px;border-radius:7px}
+  .mobile-edit-actions .icon{height:16px;width:16px}
+  .editor-metadata{margin-top:16px}
+  .editor-remark{line-height:1.6;margin-bottom:32px}
+}
+@media(max-width:380px){
+ .mobile-annotation-tool{flex-basis:55px}
+ .mobile-tool-options{gap:6px;padding-left:10px;padding-right:10px}
+ .mobile-tool-options .color-group{gap:6px}
+ .mobile-tool-options .color-dot{width:18px;height:18px}
+ .mobile-tool-head small{font-size:9px}
+}
+
+@media(max-width:760px){.mobile-card-controls .icon{height:14px;width:14px}.mobile-edit-toolbar + *{padding-bottom:220px}}

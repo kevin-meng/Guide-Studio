@@ -23,7 +23,7 @@ export function nextAnnotation(step, annotation, idFactory = () => crypto.random
   return { ...annotation, id: idFactory(), createdSeq: step.nextAnnotationSeq, createdAt: new Date().toISOString() };
 }
 export function buildPresentation(step) {
-  const active = (step.annotations || []).filter(a => a.type !== 'mask');
+  const active = (step.annotations || []).filter(a => !['mask','mosaic'].includes(a.type));
   const saved = step.presentation?.cues || [];
   const existing = new Map(saved.map((cue,i) => [cue.objectId, {...cue, savedOrder:i}]));
   const sorted = active.slice().sort((a,b) => {
@@ -37,7 +37,7 @@ export function buildPresentation(step) {
     id: existing.get(a.id)?.id || `cue-${a.id}`,
     type:'annotation.enter', objectId:a.id, atMs:700+i*900,
     durationMs: Math.max(200, Math.min(1500, existing.get(a.id)?.durationMs || 540)),
-    effect: existing.get(a.id)?.effect || (['arrow','circle','pen'].includes(a.type)?'draw':'fade')
+    effect: existing.get(a.id)?.effect || (['arrow','circle','pen','highlighter'].includes(a.type)?'draw':'fade')
   }));
   return {schemaVersion:TIMELINE_SCHEMA, timelineSource: step.presentation?.timelineSource || step.timelineSource || 'recorded',
     durationMs: Math.max(2400, 700+cues.length*900+850), subtitle:step.presentation?.subtitle ?? step.description ?? '',
