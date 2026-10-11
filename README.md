@@ -99,3 +99,22 @@ node --check web/canvas.js
 6. [测试验收、风险和迭代路线](docs/06-测试验收与迭代.md)
 
 **状态：V1 开发交付（待真实云环境部署与跨设备验收）。**
+
+## V1.1 · 标注操作记录与本地视频预览（2026-10-11）
+
+从 [`design/annotation-timeline-v1`](https://github.com/kevin-meng/Guide-Studio/tree/design/annotation-timeline-v1) 分支运行可体验：
+
+- 每个标注的稳定 ID、创建序号、画笔路径采样，以及操作事件日志（IndexedDB V2，本机保存，可导出 JSON）。
+- 点击编辑器的「动画预览」，自动让最终圆圈、箭头、文字按顺序出场；可手动调整本步骤出场次序。
+- 支持 Canvas 本地视频录制：浏览器允许的格式为 MP4 或 WebM；不是所有手机/微信浏览器都能直接下载视频。
+- 隐私遮挡在每一帧开始展示前均已生效，视频和公共教程不会公开原图及私有事件记录。
+- 最终图层和播放顺序可通过原 Guide JSON 同步云端；**完整编辑事件暂仅存本机**。视频导出需由实际设备测试。
+
+详情：[视频时间线设计](docs/07-标注事件与视频时间线设计.md) · [本地启动及验收](docs/08-事件记录与动画预览本地验收.md) · [测试](tests/timeline.test.mjs)。
+
+V1.1 验证命令：
+
+```bash
+python -m pytest -q tests/
+node --test tests/timeline.test.mjs
+```
