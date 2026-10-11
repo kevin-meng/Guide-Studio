@@ -66,4 +66,5 @@ test('privacy masks and mosaic are handled before normal animation overlays',()=
     {type:'mask',x:.1,y:.1,w:.2,h:.1},{type:'mosaic',x:.1,y:.3,w:.4,h:.2}
   ],800,800);
   assert.ok(log.includes('opaque'));assert.ok(log.includes('downsample'));assert.ok(log.includes('pixelated'));
+  assert.ok(log.lastIndexOf('opaque')>log.lastIndexOf('pixelated'),'opaque redaction must always be painted after overlapping mosaics');
 });

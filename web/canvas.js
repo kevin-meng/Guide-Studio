@@ -44,10 +44,10 @@ function drawMosaic(ctx, image, o, W, H) {
 }
 
 export function drawPrivacyMasks(ctx, image, annotations, W, H) {
-  for (const o of annotations) {
-    if (o.type === 'mask') drawAnnotation(ctx, o, W, H);
-    else if (o.type === 'mosaic') drawMosaic(ctx, image, o, W, H);
-  }
+  // Apply mosaics first regardless of layer order: an overlapping opaque mask
+  // must NEVER be repainted with pixels from the private source image.
+  annotations.filter(o => o.type === 'mosaic').forEach(o => drawMosaic(ctx, image, o, W, H));
+  annotations.filter(o => o.type === 'mask').forEach(o => drawAnnotation(ctx, o, W, H));
 }
 
 export function drawAnnotation(ctx, o, W, H) {
@@ -92,7 +92,8 @@ function drawScene(ctx, image, annotations, W, H, selected = -1, showSelection =
   ctx.clearRect(0, 0, W, H);
   if (!image) return;
   ctx.drawImage(image, 0, 0, W, H);
-  annotations.forEach(a => a.type === 'mosaic' ? drawMosaic(ctx, image, a, W, H) : drawAnnotation(ctx, a, W, H));
+  drawPrivacyMasks(ctx, image, annotations, W, H);
+  annotations.filter(o => !['mask','mosaic'].includes(o.type)).forEach(a => drawAnnotation(ctx, a, W, H));
   if (showSelection && selected >= 0 && annotations[selected]) {
     const o = annotations[selected], box = bounds(o), x = box.x * W, y = box.y * H, w = box.w * W, h = box.h * H;
     ctx.save(); ctx.setLineDash([7, 5]); ctx.strokeStyle = '#4961b0'; ctx.lineWidth = Math.max(2, Math.min(W, H) * .002);
