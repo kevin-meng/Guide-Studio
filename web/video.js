@@ -1,5 +1,5 @@
 /* Canvas-only tutorial animation: never expose an unmasked image to captured frames. */
-import {getImage, drawAnnotation} from './canvas.js';
+import {getImage, drawAnnotation, drawPrivacyMasks} from './canvas.js';
 import {timelineForGuide} from './timeline.js';
 
 export const VIDEO_WIDTH=540, VIDEO_HEIGHT=960;
@@ -10,7 +10,16 @@ export async function prepareVideo(guide) {
   const timeline=timelineForGuide(guide);
   const images=await Promise.all(timeline.entries.map(e=>getImage(e.step.imageData||e.step.imageUrl)));
   if (!timeline.entries.length || images.some(x=>!x)) throw new Error('请先为教程添加至少一张有效截图');
-  return {...timeline,images,guide};
+  // Never place an unmasked source bitmap onto the video capture canvas.
+  const sanitizedImages=images.map((image,i)=>{
+    const surface=document.createElement('canvas');
+    const scale=Math.min(1,1200/image.naturalWidth,1800/image.naturalHeight);
+    surface.width=Math.max(1,Math.round(image.naturalWidth*scale));surface.height=Math.max(1,Math.round(image.naturalHeight*scale));
+    const context=surface.getContext('2d');context.drawImage(image,0,0);
+    drawPrivacyMasks(context,image,timeline.entries[i].step.annotations||[],surface.width,surface.height);
+    return surface;
+  });
+  return {...timeline,images,sanitizedImages,guide};
 }
 
 function reveal(ctx,o,w,h,progress){
@@ -19,7 +28,7 @@ function reveal(ctx,o,w,h,progress){
     const t={...o,x2:o.x+(o.x2-o.x)*progress,y2:o.y+(o.y2-o.y)*progress};
     drawAnnotation(ctx,t,w,h);return;
   }
-  if(o.type==='pen' && progress<1){
+  if(['pen','highlighter'].includes(o.type) && progress<1){
     const points=o.points||[];
     const length=Math.max(2,Math.ceil(points.length*progress));
     drawAnnotation(ctx,{...o,points:points.slice(0,length)},w,h);return;
@@ -50,12 +59,14 @@ export function renderVideoFrame(canvas, prepared, timeMs){
   ctx.save();ctx.shadowColor='rgba(33,48,70,.11)';ctx.shadowBlur=20;ctx.shadowOffsetY=6;
   ctx.fillStyle='#fff';ctx.fillRect(x-3,y-3,iw+6,ih+6);ctx.restore();
   ctx.save();ctx.translate(x,y);
-  ctx.drawImage(img,0,0,iw,ih);
+  const safeFrame=prepared.sanitizedImages?.[idx];
+  if(!safeFrame)throw new Error('视频预览缺少已脱敏底图，请重新准备视频');
+  ctx.drawImage(safeFrame,0,0,iw,ih);
   // Critical: apply all privacy masks before capturing/presenting each complete frame.
   const anns=entry.step.annotations||[];
-  anns.filter(o=>o.type==='mask').forEach(o=>drawAnnotation(ctx,o,iw,ih));
+  // The source is already irreversibly flattened into the private sanitizedImages buffer.
   const cueMap=new Map(entry.presentation.cues.map(c=>[c.objectId,c]));
-  anns.filter(o=>o.type!=='mask').forEach(o=>{
+  anns.filter(o=>!['mask','mosaic'].includes(o.type)).forEach(o=>{
     const cue=cueMap.get(o.id);if(!cue)return;
     reveal(ctx,o,iw,ih,clamp((local-cue.atMs)/Math.max(cue.durationMs,1)));
   });
